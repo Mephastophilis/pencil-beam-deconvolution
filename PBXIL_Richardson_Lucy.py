@@ -14,7 +14,7 @@ from libtiff import TIFF
 import Surface_Radiance
 
 def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filename,
-             save_after=0, stopping_condition=10e-5, maxIter_Number=1000,
+             save_after=[0], stopping_condition=10e-5, maxIter_Number=1000,
              padsize=4):
 
     #starting the clock
@@ -24,7 +24,7 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
     num_elem = detected_image.size
     imagesize = detected_image.shape
     image_flux = np.sum(np.abs(detected_image - background))
-    estimate = (image_flux/num_elem)*np.ones(image_size)
+    estimate = (image_flux/num_elem)*np.ones(imagesize)
     time_estimate = time.time()
 
     #Tracking the convergence
@@ -37,7 +37,7 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
     #creating the kernel
     kernel = Surface_Radiance.diffusion_kernel(depth, np.array(imagesize) * padsize, pixelsize, ua, uss)
 
-    tiff = TIFF.open('/home/fautus/Documents/Deconvolution_Code/kernel/norm_surf_rad.tif', mode='w')
+    tiff = TIFF.open('/home/faustus/Documents/Deconvolution_Code/kernel/norm_surf_rad.tif', mode='w')
     tiff.write_image(kernel)
     tiff.close
 
@@ -47,16 +47,16 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
     #Deconvolution Loop
     for iteration in range(maxIter_Number):
         start = time.time()
-        acutual_iteration= iteration + 1
+        actual_iteration= iteration + 1
 
         #Computing Af
         estimated_blur = ConvFFT(estimate, kernel, padsize)
 
         #computing g/(Af)
-        comparing_data = (detected_image/(estimated_blur + background)
+        comparing_data = (detected_image/(estimated_blur + background))
 
         #computing A^t * (g/(Af))
-        correction = ConvFFT(estimate, flipped_kernel, padsize)
+        correction = ConvFFT(comparing_data, flipped_kernel, padsize)
         estimate *= correction
         estimate *= image_flux/np.sum(estimate)
 
@@ -68,7 +68,7 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
         difference_vector.append(difference)
 
         if (difference < stopping_condition):
-            save_filename = (decon_filename + '_iterations_' + str(acutual_iteration) + '.tif')
+            save_filename = (decon_filename + '_iterations_' + str(actual_iteration) + '.tif')
             tiff = TIFF.open(save_filename, mode='w')
             tiff.write_image(estimate)
             tiff.close()
@@ -83,8 +83,7 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
             tiff.write_image(estimate)
             tiff.close()
 
-
-        print "Time for %i iteration was %.3f seconds" %(acutaul_iteration, (finish - start))
+        print "Time for %i iteration was %.3f seconds" %(actual_iteration, (finish - start))
 
     finish_time = time.time()
     print "Total elapsed time %f for RL Deconvolution" %(finish_time - start_time)
