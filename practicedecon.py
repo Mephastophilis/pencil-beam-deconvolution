@@ -38,10 +38,16 @@ decon, iter_vec, diff_vec = PBRL.RL_decon(slice1p12, 0.80, pix_size, 0.15, 5, ba
 darkarray = zeros(512,512,50)
 for i = 1:50:
   if i < 10:
-   dark=Image.open('/users/Bryan/Documents/XLXF_data/Deconvolution/XL_Camera_Images_Labeled/XLdark_0',num2str(i),'.tif')
+    filepath = '/users/Bryan/Documents/XLXF_data/Deconvolution/XL_Camera_Images_Labeled/XLdark_0' + str(i) + '.tif'
+    dark = Image.open(filepath)
+    darkarry(:,:,i) = np.array(dark)
+    Image.close()
   else:
+    filepath = '/users/Bryan/Documents/XLXF_data/Deconvolution/XL_Camera_Images_Labeled/XLdark_' + str(i) + '.tif'
+    dark = Image.open(filepath)
+    darkarry(:,:,i) = np.array(dark)
+    Image.close()
    
- dark=Image.open
 
 for s = 1:5:
   for p = 1:23:
