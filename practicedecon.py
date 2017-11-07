@@ -3,7 +3,7 @@
 from __future__ import division
 
 import sys
-sys.path.insert(0,"/home/faustus/Documents/Deconvolution_Code ")
+sys.path.insert(0,"/users/Bryan/Documents/Deconvolution_Code ")
 
 from PIL import Image
 import numpy as np
@@ -18,9 +18,15 @@ from tabulate import tabulate
 
 pix_size=0.0096 #cm (96 um)
 
+
+
 slice1p12 = Image.open('/home/faustus/Documents/Deconvolution_Code/XLslices/slice1_position12.tif')
+Image.close()
 slice1p12 = np.array(slice1p12, dtype=np.float64)
+
 darkimage = Image.open('/home/faustus/Documents/Deconvolution_Code/XLslices/XLmeanbkgd.tif')
+Image.close()
+
 darkimage = np.array(darkimage, dtype=np.float64)
 
 background = np.std(darkimage) ** 2
@@ -28,6 +34,21 @@ background = np.std(darkimage) ** 2
 decon_filename='/home/faustus/Documents/Deconvolution_Code/decon/deconpractice'
 
 decon, iter_vec, diff_vec = PBRL.RL_decon(slice1p12, 0.80, pix_size, 0.15, 5, background, decon_filename, [100000], stopping_condition=10e-5, maxIter_Number=100000)
+
+darkarray = zeros(512,512,50)
+for i = 1:50:
+  if i < 10:
+   dark=Image.open('/users/Bryan/Documents/XLXF_data/Deconvolution/XL_Camera_Images_Labeled/XLdark_0',num2str(i),'.tif')
+  else:
+   
+ dark=Image.open
+
+for s = 1:5:
+  for p = 1:23:
+    filepath = strcat('/users/Bryan/Documents/XLXF_data/Deconvolution/XL_Camera_Images_Labeled/XLslice',num2str(s),'pos0',num2str(p),'img01.tif')
+    detectedimage = Image.open(filepath)
+    detectedimage = np.arry(detectedimage)
+    Image.close()
 
  # ----------       Plot profile across sources       --------------
 majorLocator = MultipleLocator(0.5)
