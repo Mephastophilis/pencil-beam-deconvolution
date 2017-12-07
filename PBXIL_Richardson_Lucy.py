@@ -1,10 +1,10 @@
-  #Richardson Lucy Pencil Beam Deconvolution function
+#Richardson Lucy Pencil Beam Deconvolution function
 #Written by Bryan Quigley with guidance from Corey Smith
 
 from __future__ import division
 
 import sys
-sys.path.insert(0, "/home/faustus/Documents/Deconvolution_Code")
+sys.path.insert(0, "/home/bquigley/Research/Deconvolution_Code")
 
 import numpy as np
 import scipy.misc
@@ -13,10 +13,22 @@ import time
 from libtiff import TIFF
 import Surface_Radiance
 
-def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filename,
-             save_after=[0], stopping_condition=10e-5, maxIter_Number=1000,
-             padsize=4):
-
+def RL_decon(x):
+    
+    s = x[0]
+    p = x[1]
+    detected_image=x[2]
+    depth=x[3]
+    pixelsize=x[4]
+    ua=x[5]
+    uss=x[6]
+    background=x[7]
+    decon_filename=x[8]
+    save_after=x[9]
+    stopping_condition=x[10]
+    maxIter_Number=x[11]
+    padsize=x[12]
+    
     #starting the clock
     start_time = time.time()
 
@@ -25,6 +37,8 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
     imagesize = detected_image.shape
     image_flux = np.sum(np.abs(detected_image - background))
     estimate = (image_flux/num_elem)*np.ones(imagesize)
+    estimate[0:310,:]=0
+    estimate[311:511,:]=0
     time_estimate = time.time()
 
     #Tracking the convergence
@@ -32,12 +46,12 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
     iteration_vector = []
     difference_vector = []
 
-    print "background", background
+    #print "background", background
 
     #creating the kernel
     kernel = Surface_Radiance.diffusion_kernel(depth, np.array(imagesize) * padsize, pixelsize, ua, uss)
 
-    tiff = TIFF.open('/home/faustus/Documents/Deconvolution_Code/kernel/norm_surf_rad.tif', mode='w')
+    tiff = TIFF.open('/home/bquigley/Research/Deconvolution_Code/kernel/norm_surf_rad.tif', mode='w')
     tiff.write_image(kernel)
     tiff.close
 
@@ -58,7 +72,8 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
         #computing A^t * (g/(Af))
         correction = ConvFFT(comparing_data, flipped_kernel, padsize)
         estimate *= correction
-        estimate *= image_flux/np.sum(estimate)
+        estimate *= (image_flux/np.sum(estimate))
+    
 
         #Convergence
         l2_diff = np.sqrt(np.sum((estimate - old) ** 2))
@@ -68,9 +83,9 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
         difference_vector.append(difference)
 
         if (difference < stopping_condition):
-            save_filename = (decon_filename + '_iterations_' + str(actual_iteration) + '.tif')
+            save_filename = (decon_filename + 'Slice_' + str(s) + '_Position_' + str(p) + '_iterations_' + str(actual_iteration) + '.tif')
             tiff = TIFF.open(save_filename, mode='w')
-            tiff.write_image(estimate)
+            tiff.write_image(estimate.astype(dtype=np.float32))
             tiff.close()
             break
 
@@ -78,25 +93,29 @@ def RL_decon(detected_image, depth, pixelsize, ua, uss, background, decon_filena
         finish = time.time()
 
         if (any(x == actual_iteration for x in save_after)):
-            save_filename = (decon_filename + '_iterations_' + str(actual_iteration) + '.tif')
+            save_filename = (decon_filename + 'Slice_' + str(s) + '_Position_' + str(p) + '_iterations_' + str(actual_iteration) + '.tif')
             tiff = TIFF.open(save_filename, mode='w')
-            tiff.write_image(estimate)
+            tiff.write_image(estimate.astype(dtype=np.float32))
             tiff.close()
 
-        print "Time for %i iteration was %.3f seconds" %(actual_iteration, (finish - start))
+        print "Time for %i iteration was %.3f seconds (Slice %i Position %i)" %(actual_iteration, (finish - start), s, p)
 
     finish_time = time.time()
-    print "Total elapsed time %f for RL Deconvolution" %(finish_time - start_time)
+    print "Total elapsed time %f for RL Deconvolution (Slice %i Position %i)" %((finish_time - start_time), s, p)
+    
+    save_filename = (decon_filename + 'Slice_' + str(s) + '_Position_' + str(p) + '_iterations_' + str(actual_iteration) + '.tif')
+    tiff = TIFF.open(save_filename, mode='w')
+    tiff.write_image(estimate.astype(dtype=np.float32))
+    tiff.close()
 
-    return estimate, iteration_vector, difference_vector
+    return [estimate, iteration_vector, difference_vector]
 
 def ConvFFT(image, kernel, padsize):
     img_shape = image.shape
     kernel = Shift(kernel)
     image = addpad(image, padsize)
-
-    tiff = TIFF.open('/home/faustus/Documents/Deconvolution_Code/kernel/padded_images.tif', mode='w')
-    tiff.write_image(image)
+    tiff = TIFF.open('/home/bquigley/Research/Deconvolution_Code/kernel/padded_images.tif', mode='w')
+    tiff.write_image(image.astype(dtype=np.float32))
     tiff.close()
 
     kern_fft = np.fft.fft2(kernel)
