@@ -12,6 +12,8 @@ def diffusion_kernel(depth, imagesize, pixelsize, ua, uss, norm = True):
     xx = np.arange(-xhalf_width, xhalf_width)
     yy = np.arange(-yhalf_width, yhalf_width)
     X, Y = np.meshgrid(xx, yy)
+    X *= pixelsize
+    Y *= pixelsize
     R = np.sqrt(X**2 + Y**2)
     kernel = Nsurfrad(R, depth, ua, uss)
 
