@@ -42,10 +42,6 @@ def RL_decon(x):
     estimate = np.zeros((512,512))
     estimate[256,:] = binarymaskXF[pos-1,:]*image_flux / np.sum(binarymaskXF)
 
-    #estimate = (image_flux/512)*np.ones(imagesize)
-    #estimate[0:255,:]=0
-    #estimate[257:511,:]=0
-
     #Tracking the convergence
     old = np.copy(estimate)
     iteration_vector = []
